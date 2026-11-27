@@ -183,7 +183,17 @@ tr.yo td{background:color-mix(in srgb,var(--rosa) 10%,transparent)}
 .slot.cons .ficha{box-shadow:0 0 0 3px #f6c90e,0 2px 6px #0005}
 .slot.cons .nom::before{content:"⭐ "}
 .cons-btn{display:block;margin-top:8px;background:color-mix(in srgb,#f6c90e 25%,transparent);border:0;border-radius:999px;padding:5px 12px;font:600 14px Barlow,sans-serif;color:inherit;cursor:pointer}
-.pie{text-align:center;margin:28px 0 10px;font-size:14px;opacity:.85}.pie a{color:inherit}
+.pie{text-align:center;margin:30px 0 14px}
+.pie-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.pbtn{display:inline-flex;align-items:center;gap:6px;min-height:46px;padding:10px 18px;border-radius:12px;font:700 15px Barlow,system-ui,sans-serif;text-decoration:none;border:0;cursor:pointer;box-shadow:0 2px 8px #0002}
+.pbtn.wa{background:#25d366;color:#0b2e17}.pbtn.kk{background:#0b0e0f;color:#53fc18}.pbtn.ct{background:#fff;color:#14202a}
+.pbtn:focus-visible{outline:3px solid #f6c90e;outline-offset:2px}
+.pie-txt{display:inline-block;margin:14px 0 0;padding:6px 14px;border-radius:999px;background:#0b0e0fcc;font-size:13px;color:#fff}.pie-txt a{color:inherit}
+.fcont label{display:block;font-weight:600;margin:10px 0 4px}
+.fcont input,.fcont select,.fcont textarea{width:100%;min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);font:inherit;font-size:16px;color:inherit}
+.fcont textarea{min-height:120px;resize:vertical}
+.msg{border-top:1px solid var(--line);padding:10px 0}.msg.nuevo{background:color-mix(in srgb,#f6c90e 12%,transparent)}
+.msg .m{font-size:13px;opacity:.8}.msg p{margin:6px 0;white-space:pre-wrap}
 .cuenta{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .cuenta input{flex:1;min-width:200px}
 .gbtn{display:inline-flex;align-items:center;gap:8px}
@@ -297,7 +307,7 @@ tr.clas td:first-child{box-shadow:inset 4px 0 var(--pasto)}
         <p class="note" id="recordTxt"></p>
         <div class="rbusca">
           <input id="rBuscar" type="search" placeholder="Buscar club, alias o ciudad" aria-label="Buscar rival">
-          <select id="rFiltro" aria-label="Filtrar rivales"><option value="">Todos</option><option value="div">Mi división</option><option value="hoy">Disponibles hoy</option></select>
+          <select id="rFiltro" aria-label="Filtrar rivales"><option value="">Todos</option><option value="div">Mi división</option><option value="hoy">Disponibles hoy</option><option value="linea">🟢 Conectados ahora</option></select>
         </div>
         <div id="rivales"></div>
       </div>
@@ -321,6 +331,7 @@ tr.clas td:first-child{box-shadow:inset 4px 0 var(--pasto)}
 
   <section id="v-perfil" hidden>
     <div class="panel" id="cuentaPanel"></div>
+    <div class="panel" id="buzonPanel" hidden></div>
     <div class="grid">
       <form class="panel" id="fPerfil">
         <h2 id="perfilTitulo">Regístrate</h2>
@@ -351,7 +362,12 @@ tr.clas td:first-child{box-shadow:inset 4px 0 var(--pasto)}
     </div>
   </section>
   <footer class="pie">
-    <a href="#" id="waShare">📲 Invita a tu gente por WhatsApp</a> · <a href="privacidad.html">Aviso de privacidad</a> · <a href="https://kick.com/ciiceero" target="_blank" rel="noopener">Ciiceero en Kick</a>
+    <div class="pie-btns">
+      <a href="#" id="waShare" class="pbtn wa">📲 Invita por WhatsApp</a>
+      <a href="https://kick.com/ciiceero" target="_blank" rel="noopener" class="pbtn kk">🟢 Ciiceero en Kick</a>
+      <button type="button" id="contactoBtn" class="pbtn ct">💬 Sugerencias y contacto</button>
+    </div>
+    <p class="pie-txt"><a href="privacidad.html">Aviso de privacidad</a> · Culto Fútbol MX · Hecho por y para la comunidad futbolera</p>
   </footer>
 </main>
 
@@ -382,6 +398,21 @@ tr.clas td:first-child{box-shadow:inset 4px 0 var(--pasto)}
       <button class="btn" id="dSugerir">Sugerir clásicos</button>
       <span class="note warn" id="dError" style="margin:0"></span>
     </div>
+  </div>
+</div>
+<div class="sheet" id="ctSheet" hidden>
+  <div class="in" role="dialog" aria-modal="true" aria-labelledby="ctTitulo">
+    <header><h3><span id="ctTitulo">💬 Sugerencias y contacto</span><button class="x" id="ctCerrar" aria-label="Cerrar">Cerrar</button></h3></header>
+    <form class="lista fcont" id="fContacto" style="padding:16px">
+      <p style="margin-top:0">¿Falta un jugador, una media está mal, encontraste un error o quieres colaborar? Escríbenos y te respondemos.</p>
+      <label for="ctNombre">Tu nombre o alias</label><input id="ctNombre" maxlength="60" required>
+      <label for="ctContacto">¿Cómo te contactamos? (correo, Kick, Instagram…)</label><input id="ctContacto" maxlength="100" placeholder="Opcional, para poder responderte">
+      <label for="ctTipo">Tipo</label>
+      <select id="ctTipo"><option>Sugerencia</option><option>Falta un jugador</option><option>Error en el juego</option><option>Colaboración</option><option>Otro</option></select>
+      <label for="ctMsg">Mensaje</label><textarea id="ctMsg" maxlength="1500" required minlength="5"></textarea>
+      <input id="ctTrampa" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+      <div class="acts" style="margin-top:14px"><button class="btn pri" type="submit" id="ctEnviar">Enviar</button></div>
+    </form>
   </div>
 </div>
 <div class="sheet" id="cSheet" hidden>
@@ -463,7 +494,8 @@ function limpiarTorneo(id, d) {
   if (equipos.some(e => !e)) return null;
   const ritmoH = [-1, 0, 1, 6, 12, 24].includes(d.ritmoH) ? d.ritmoH : 12;
   const division = DIVS.includes(d.division) ? d.division : "plata";
-  return { id, num: d.num, creado: d.creado, ritmoH, equipos, division };
+  const motor = Number.isInteger(d.motor) ? d.motor : 2;
+  return { id, num: d.num, creado: d.creado, ritmoH, equipos, division, motor };
 }
 const DIVS = ["descenso", "plata", "oro", "elite"];
 const DIV_NOM = { descenso: "Descenso", plata: "Plata", oro: "Oro", elite: "Élite" };
@@ -596,16 +628,18 @@ function cuando(ms) {
 }
 
 // ---------- cancha ----------
+// Medios en varias alturas: [cuántos, altura] de atrás hacia adelante
+const FILAS_MED = { "4-2-3-1": [[2, 57], [3, 36]], "4-1-4-1": [[1, 58], [4, 41]], "4-1-2-1-2": [[1, 58], [2, 45], [1, 32]], "3-4-2-1": [[4, 52], [2, 33]] };
 function coords(f) {
   const lin = C.FORMACIONES[f], out = [];
   const grupos = {}; lin.forEach((l, i) => (grupos[l] = grupos[l] || []).push(i));
   const Y = { POR: 89, DEF: 71, MED: 47, DEL: 19 };
   for (const l in grupos) {
     let idx = grupos[l];
-    if (f === "4-2-3-1" && l === "MED") {
-      const a = idx.slice(0, 2), b = idx.slice(2);
-      a.forEach((i, k) => out[i] = [ (k + 1) / 3 * 100, 57 ]);
-      b.forEach((i, k) => out[i] = [ (k + 1) / 4 * 100, 36 ]);
+    const filas = l === "MED" && FILAS_MED[f];
+    if (filas) {
+      let n = 0;
+      filas.forEach(([cuantos, y]) => { idx.slice(n, n + cuantos).forEach((i, k) => out[i] = [(k + 1) / (cuantos + 1) * 100, y]); n += cuantos; });
       continue;
     }
     idx.forEach((i, k) => out[i] = [ (k + 1) / (idx.length + 1) * 100, Y[l] ]);
@@ -647,7 +681,9 @@ function pintarPanel() {
   const filas = F ? [["Ataque", F.ataque], ["Medio", F.medio], ["Defensa", F.defensa], ["Portería", F.porteria], ["Química", F.quimica / C.QUIM_MAX * 100]] : [["Ataque", 0], ["Medio", 0], ["Defensa", 0], ["Portería", 0], ["Química", 0]];
   $("media").textContent = F ? F.media : "—";
   const qd = C.quimicaDetalle(me.xi.map(id => MAPA[id]).filter(Boolean));
-  $("quimDet").innerHTML = `<b>Química ${qd.total} de ${C.QUIM_MAX}</b><span class="qpartes">${Object.keys(C.PARTES).map(k => `<span class="qp${qd.partes[k] >= C.PARTE_MAX ? " lleno" : ""}" title="${qd.det.filter(d => d.parte === k).map(d => esc(d.txt)).join(", ")}"><small>${C.PARTES[k]}</small><b>${Math.round(qd.partes[k] * 10) / 10}/${C.PARTE_MAX}</b></span>`).join("")}</span>` + (qd.det.length ? qd.det.map(d => `${esc(d.txt)} (+${Math.round(d.pts * 100) / 100})`).join(" · ") : "Mezcla clubes, compatriotas, épocas y estilos para subir la química.");
+  const crudo = k => qd.det.filter(d => d.parte === k).reduce((s, d) => s + d.pts, 0);
+  $("quimDet").innerHTML = `<b>Química ${qd.total} de ${C.QUIM_MAX}</b><span class="qpartes">${Object.keys(C.PARTES).map(k => `<span class="qp${qd.partes[k] >= C.PARTE_MAX ? " lleno" : ""}" title="${qd.det.filter(d => d.parte === k).map(d => esc(d.txt)).join(", ")}"><small>${C.PARTES[k]}</small><b>${Math.round(qd.partes[k] * 10) / 10}/${C.PARTE_MAX}</b>${crudo(k) > C.PARTE_MAX ? `<small>tope · sumabas ${Math.round(crudo(k) * 100) / 100}</small>` : ""}</span>`).join("")}</span>`
+    + (Object.keys(C.PARTES).some(k => crudo(k) > C.PARTE_MAX) ? `<span class="note" style="display:block;margin-bottom:6px">Cada parte llega máximo a ${C.PARTE_MAX}. Lo que pase del tope no cuenta: para subir tu química, busca puntos en otra parte.</span>` : "") + (qd.det.length ? qd.det.map(d => `${esc(d.txt)} (+${Math.round(d.pts * 100) / 100})`).join(" · ") : "Mezcla clubes, compatriotas, épocas y estilos para subir la química.");
   $("bars").innerHTML = filas.map(([k, v]) => `<div class="bar"><span>${k}</span><span class="t"><i style="width:${k === "Química" ? v : Math.max(0, Math.min(100, (v - 50) * 2))}%"></i></span><span class="v">${F ? Math.round(v) : "—"}</span></div>`).join("");
   const mal = me.xi.filter((id, i) => id && MAPA[id].pos !== C.FORMACIONES[me.formacion][i]).length;
   const av = [];
@@ -748,13 +784,13 @@ function pintarRivales() {
   const q = norm($("rBuscar").value.trim()), filtro = $("rFiltro").value, miDiv = divisionDe(miId());
   const todos = otros.filter(o => o.id !== uid && completo(o));
   const com = todos.filter(o => (!q || norm([o.equipo, o.alias, o.ciudad, o.club].join(" ")).includes(q))
-      && (filtro !== "div" || divisionDe(o.id) === miDiv) && (filtro !== "hoy" || !jugadoHoy(o.id)))
-    .sort((a, b) => jugadoHoy(a.id) - jugadoHoy(b.id) || DIVS.indexOf(divisionDe(b.id)) - DIVS.indexOf(divisionDe(a.id)) || String(a.equipo).localeCompare(String(b.equipo), "es"));
+      && (filtro !== "div" || divisionDe(o.id) === miDiv) && (filtro !== "hoy" || !jugadoHoy(o.id)) && (filtro !== "linea" || enLinea.has(o.id)))
+    .sort((a, b) => enLinea.has(b.id) - enLinea.has(a.id) || jugadoHoy(a.id) - jugadoHoy(b.id) || DIVS.indexOf(divisionDe(b.id)) - DIVS.indexOf(divisionDe(a.id)) || String(a.equipo).localeCompare(String(b.equipo), "es"));
   const vis = com.slice(0, rivMax);
   const fila = o => {
     const F = C.fuerza(o, MAPA), ya = !o.casa && jugadoHoy(o.id);
     const b = !listo ? `<button class="btn" disabled>Retar</button>` : ya ? `<button class="btn" disabled>Mañana</button>` : `<button class="btn pri" data-retar="${esc(o.id)}">Retar</button>`;
-    return `<div class="rival"><div><div class="n">${linkEq(o, "c")}${o.casa ? '<span class="tag">Práctica</span>' : ""}</div><div class="m">${esc(o.alias || "Anónimo")}${o.ciudad ? " · " + esc(o.ciudad) : ""}${o.casa ? "" : " · " + DIV_NOM[divisionDe(o.id)]} · ${o.formacion} · media ${F ? F.media : "—"}</div></div>${b}</div>`;
+    return `<div class="rival"><div><div class="n">${linkEq(o, "c")}${o.casa ? '<span class="tag">Práctica</span>' : enLinea.has(o.id) ? '<span class="tag" title="Conectado ahora">🟢 En línea</span>' : ""}</div><div class="m">${esc(o.alias || "Anónimo")}${o.ciudad ? " · " + esc(o.ciudad) : ""}${o.casa ? "" : " · " + DIV_NOM[divisionDe(o.id)]} · ${o.formacion} · media ${F ? F.media : "—"}</div></div>${b}</div>`;
   };
   $("rivales").innerHTML = `<h3>Comunidad <small style="font-size:14px;opacity:.7">${com.length}${com.length !== todos.length ? ` de ${todos.length}` : ""} club${todos.length === 1 ? "" : "es"}</small></h3>` + (vis.length ? vis.map(fila).join("") + (com.length > vis.length ? `<button class="btn" id="rMas" style="margin:8px 0">Ver ${Math.min(20, com.length - vis.length)} más</button>` : "") : `<p class="vacio-msg">${todos.length ? "Ningún club coincide con tu búsqueda." : db ? "Todavía no hay otros equipos completos. Comparte el enlace con tu gente." : "Cargando la comunidad…"}</p>`) + `<h3 style="margin-top:20px">Rivales de la casa</h3>` + CASA.map(fila).join("");
 }
@@ -1318,7 +1354,7 @@ function errTxt(e, def) {
   return m && m.length < 140 ? m : def;
 }
 const filaAClub = r => { const x = limpiar({ ...r, inscripcion: r.inscrito_at ? { at: Date.parse(r.inscrito_at) } : null }); return x && { id: r.id, ...x, consentido: r.consentido || x.consentido, div: r.inscrito_div }; };
-const filaATorneo = r => limpiarTorneo("t" + String(r.num).padStart(4, "0"), { num: r.num, creado: Date.parse(r.creado), ritmoH: r.ritmo, equipos: r.equipos, division: r.division });
+const filaATorneo = r => limpiarTorneo("t" + String(r.num).padStart(4, "0"), { num: r.num, creado: Date.parse(r.creado), ritmoH: r.ritmo, equipos: r.equipos, division: r.division, motor: r.motor });
 async function cargarClubes() {
   const r = await sb.from("clubes").select("*").order("creado", { ascending: true }).limit(5000);
   if (r.error) throw r.error;
@@ -1371,6 +1407,69 @@ $("waShare").addEventListener("click", e => {
   open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank", "noopener");
 });
 
+// Presencia: cuántos están dentro de la página en este momento
+let enLinea = new Set(), conectados = 0;
+function pintarEstado() {
+  const c = conectados ? ` · 🟢 ${conectados} conectado${conectados === 1 ? "" : "s"}` : "";
+  estado(uid ? `${otros.length} clubes${c}` : `Inicia sesión · ${otros.length} clubes${c}`, !!uid);
+}
+function presencia() {
+  const llave = uid || ("visita-" + Math.random().toString(36).slice(2, 10));
+  const ch = sb.channel("en-linea", { config: { presence: { key: llave } } });
+  ch.on("presence", { event: "sync" }, () => {
+    const st = ch.presenceState();
+    conectados = Object.keys(st).length;
+    enLinea = new Set(Object.keys(st).filter(k => !k.startsWith("visita-")));
+    pintarEstado(); pintarRivales();
+  }).subscribe(async s => { if (s === "SUBSCRIBED") await ch.track({ t: Date.now() }); });
+}
+// ---------- sugerencias y contacto ----------
+$("contactoBtn").addEventListener("click", () => {
+  if (!$("ctNombre").value) $("ctNombre").value = me.alias || "";
+  $("ctSheet").hidden = false;
+});
+$("ctSheet").addEventListener("click", e => { if (e.target.id === "ctCerrar" || e.target === $("ctSheet")) $("ctSheet").hidden = true; });
+$("fContacto").addEventListener("submit", async e => {
+  e.preventDefault();
+  if ($("ctTrampa").value) { $("ctSheet").hidden = true; return; } // robots
+  const datos = { nombre: $("ctNombre").value.trim().slice(0, 60), contacto: $("ctContacto").value.trim().slice(0, 100), tipo: $("ctTipo").value, mensaje: $("ctMsg").value.trim().slice(0, 1500) };
+  if (datos.nombre.length < 1 || datos.mensaje.length < 5) { toast("Escribe tu nombre y un mensaje."); return; }
+  $("ctEnviar").disabled = true;
+  let ok = false;
+  if (sb) { const r = await sb.from("mensajes").insert(datos); ok = !r.error; }
+  const key = (window.CULTO_CONFIG || {}).web3formsKey;
+  if (key && !/TU_LLAVE/.test(key)) {
+    try {
+      const fd = new FormData();
+      fd.append("access_key", key); fd.append("subject", `Culto Fútbol MX · ${datos.tipo}`); fd.append("from_name", "Culto Fútbol MX");
+      fd.append("Nombre", datos.nombre); fd.append("Contacto", datos.contacto || "(no dejó)"); fd.append("Tipo", datos.tipo); fd.append("Mensaje", datos.mensaje);
+      if (uid) fd.append("Club", (me.equipo || "") + " · " + (correo || ""));
+      const r = await fetch("https://api.web3forms.com/submit", { method: "POST", body: fd });
+      ok = ok || r.ok;
+    } catch (x) {}
+  }
+  $("ctEnviar").disabled = false;
+  if (ok) { $("ctMsg").value = ""; $("ctSheet").hidden = true; toast("¡Gracias! Recibimos tu mensaje."); }
+  else toast("No se pudo enviar. Intenta otra vez en un momento.");
+});
+async function pintarBuzon() {
+  const p = $("buzonPanel"); if (!p) return;
+  if (!sb || !esDueno) { p.hidden = true; return; }
+  const r = await sb.from("mensajes").select("*").order("creado", { ascending: false }).limit(50);
+  if (r.error) { p.hidden = true; return; }
+  p.hidden = false;
+  const nuevos = r.data.filter(m => !m.leido).length;
+  p.innerHTML = `<h2>📬 Buzón ${nuevos ? `<span class="tag">${nuevos} nuevo${nuevos === 1 ? "" : "s"}</span>` : ""}</h2><p class="note" style="margin-top:0">Solo lo ven los administradores.</p>` +
+    (r.data.length ? r.data.map(m => `<div class="msg${m.leido ? "" : " nuevo"}"><div class="m"><b>${esc(m.tipo)}</b> · ${esc(m.nombre)}${m.contacto ? " · " + esc(m.contacto) : ""} · ${esc(new Date(m.creado).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }))}</div><p>${esc(m.mensaje)}</p>
+      <div class="acts">${m.leido ? "" : `<button class="btn" data-leido="${m.id}">Marcar leído</button>`}<button class="btn" data-borrar="${m.id}">Borrar</button></div></div>`).join("") : `<p class="vacio-msg">Sin mensajes todavía.</p>`);
+}
+$("buzonPanel").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.leido) await sb.from("mensajes").update({ leido: true }).eq("id", +b.dataset.leido);
+  if (b.dataset.borrar) await sb.from("mensajes").delete().eq("id", +b.dataset.borrar);
+  pintarBuzon();
+});
+
 async function conectar() {
   const cfg = window.CULTO_CONFIG || {};
   if (!window.supabase || !cfg.url || !cfg.anonKey || /TU_PROYECTO/.test(cfg.url)) { sb = null; db = null; estado("Modo local", false); pintarCuenta(); return; }
@@ -1389,16 +1488,18 @@ async function conectar() {
       else if (me.alias) await guardar("¡Bienvenido! Tu club ya está en la comunidad."); // sube lo que armaste antes de entrar
     }
   } catch (e) { estado("Comunidad no disponible", false); toast(errTxt(e, "No se pudo cargar la comunidad.")); }
-  estado(uid ? `Comunidad en vivo · ${otros.length} clubes` : `Inicia sesión · ${otros.length} clubes`, !!uid);
+  pintarEstado();
   pintarCuenta(); pintarTodo(); ruta();
   if (uid) setTimeout(asegurarConsentido, 300);
+  try { presencia(); } catch (e) {}
+  pintarBuzon();
   // Tiempo real: clubes y torneos
   sb.channel("culto")
     .on("postgres_changes", { event: "*", schema: "public", table: "clubes" }, p => {
       if (p.eventType === "DELETE") otros = otros.filter(o => o.id !== (p.old && p.old.id));
       else { const x = filaAClub(p.new); if (x) otros = [...otros.filter(o => o.id !== x.id), x]; if (x && x.id === uid) { me.inscripcion = x.inscripcion; me.consentido = x.consentido; if (!sucio) { me.partidos = x.partidos; } } }
       if (!sucio) pintarTodo(); else { pintarRivales(); pintarTabla(); pintarTorneo(); }
-      estado(uid ? `Comunidad en vivo · ${otros.length} clubes` : `Inicia sesión · ${otros.length} clubes`, !!uid);
+      pintarEstado();
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "torneos" }, async () => { await cargarTorneos(); pintarTodo(); })
     .subscribe();

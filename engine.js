@@ -6,7 +6,11 @@
     "4-4-2": ["POR","DEF","DEF","DEF","DEF","MED","MED","MED","MED","DEL","DEL"],
     "4-2-3-1": ["POR","DEF","DEF","DEF","DEF","MED","MED","MED","MED","MED","DEL"],
     "3-5-2": ["POR","DEF","DEF","DEF","MED","MED","MED","MED","MED","DEL","DEL"],
-    "5-3-2": ["POR","DEF","DEF","DEF","DEF","DEF","MED","MED","MED","DEL","DEL"]
+    "5-3-2": ["POR","DEF","DEF","DEF","DEF","DEF","MED","MED","MED","DEL","DEL"],
+    "3-4-3": ["POR","DEF","DEF","DEF","MED","MED","MED","MED","DEL","DEL","DEL"],
+    "4-1-4-1": ["POR","DEF","DEF","DEF","DEF","MED","MED","MED","MED","MED","DEL"],
+    "4-1-2-1-2": ["POR","DEF","DEF","DEF","DEF","MED","MED","MED","MED","DEL","DEL"],
+    "3-4-2-1": ["POR","DEF","DEF","DEF","MED","MED","MED","MED","MED","MED","DEL"]
   };
   const ESTILOS = {
     at: { nombre: "Atajador", m: { POR: 0, DEF: -45, CRE: -40, ATQ: -60, VEL: -40, FIS: -20 } },
@@ -57,7 +61,7 @@
   // Está pensada para premiar la mezcla: un 11 de un solo club se queda corto.
   const QUIM_MAX = 12, PARTE_MAX = 3;
   const PARTES = { club: "Club", sel: "Selección", juego: "Tipo de juego", variedad: "Variedad" };
-  function quimicaDetalle(jugadores) {
+  function quimicaDetalle(jugadores, motor = MOTOR) {
     const det = [], partes = { club: 0, sel: 0, juego: 0, variedad: 0 };
     const add = (parte, txt, pts) => { if (pts > 0) { det.push({ parte, txt, pts }); partes[parte] += pts; } };
     const club = {}, era = {}, pais = {};
@@ -77,7 +81,7 @@
     if (est("la") + est("ll") + est("v") >= 2) add("juego", "velocidad por las bandas", 0.75);
     // Variedad: muchos clubes y varias épocas
     const nc = Object.keys(club).length, ne = Object.keys(era).length;
-    if (nc >= 5) add("variedad", `${nc} clubes distintos`, nc >= 9 ? 2 : nc >= 7 ? 1.5 : 1);
+    if (nc >= 5) add("variedad", `${nc} clubes distintos`, nc >= (motor >= 3 ? 8 : 9) ? 2 : nc >= 7 ? 1.5 : 1);
     if (ne >= 3) add("variedad", `${ne} épocas distintas`, ne >= 4 ? 1 : 0.5);
     let total = 0;
     Object.keys(partes).forEach(k => { partes[k] = Math.min(PARTE_MAX, partes[k]); total += partes[k]; });
@@ -86,10 +90,13 @@
   }
   const PAIS_NOM = { MX: "Mexicanos", AR: "Argentinos", UY: "Uruguayos", CL: "Chilenos", CO: "Colombianos", EC: "Ecuatorianos", PY: "Paraguayos", BR: "Brasileños", PE: "Peruanos", VE: "Venezolanos", ES: "Españoles", FR: "Franceses", US: "Estadounidenses", PT: "Portugueses", NL: "Neerlandeses", GR: "Griegos", MA: "Marroquíes", CR: "Costarricenses", PA: "Panameños", HN: "Hondureños", CM: "Cameruneses", ZM: "Zambianos", CV: "Caboverdianos" };
   const bandera = c => String.fromCodePoint(...[...c].map(x => 127397 + x.charCodeAt(0)));
-  function quimica(jugadores) { return quimicaDetalle(jugadores).total; }
+  function quimica(jugadores, motor) { return quimicaDetalle(jugadores, motor).total; }
 
   // equipo: { formacion, xi: [ids] } ; mapa: id -> jugador
-  function fuerza(equipo, mapa) {
+  // Versión del motor: cada torneo guarda la suya para que su historial nunca cambie.
+  // 2 = primera versión · 3 = formaciones más parejas (posesión menos decisiva)
+  const MOTOR = 3;
+  function fuerza(equipo, mapa, motor = MOTOR) {
     const f = FORMACIONES[equipo.formacion] || FORMACIONES["4-3-3"];
     const js = (equipo.xi || []).map(id => mapa[id]).filter(Boolean);
     if (js.length < 11 || (equipo.xi || []).length !== 11) return null;
@@ -112,11 +119,12 @@
       else for (const k in acc) { acc[k][0] += W[k][linea] * v[k]; acc[k][1] += W[k][linea]; }
       roles.push({ p, linea, a });
     });
-    const q = quimica(js), mult = 1 + q / 100;
-    const linea = k => (acc[k][0] / acc[k][1] + 3 * (acc[k][1] - BASE[k])) * mult;
+    const q = quimica(js, motor), mult = 1 + q / 100;
+    const porUnidad = motor >= 3 ? 2 : 3;
+    const linea = k => (acc[k][0] / acc[k][1] + porUnidad * (acc[k][1] - BASE[k])) * mult;
     return {
       ataque: linea("atq"), medio: linea("ctl"), defensa: linea("def"),
-      porteria: por * mult, quimica: q, roles,
+      porteria: por * mult, quimica: q, roles, motor,
       media: Math.round(js.reduce((s, p) => s + p.ovr, 0) / 11),
       costo: js.reduce((s, p) => s + p.precio, 0)
     };
@@ -133,11 +141,11 @@
   function simular(A, B, seed) {
     const r = rng(seed), ev = [], gol = [0, 0], tiros = [0, 0], pos = [0, 0], tarjetas = [[0, 0], [0, 0]];
     const T = [A, B], JUG = 24, fuera = [new Set(), new Set()], amar = [{}, {}], menos = [0, 0];
-    const k = i => 1 - MENOS * menos[i];
+    const k = i => 1 - MENOS * menos[i], DIV = (A.motor || MOTOR) >= 3 ? 16 : 9;
     const vivos = (i, f) => T[i].roles.filter(x => !fuera[i].has(x.p.id) && (!f || f(x)));
     for (let i = 0; i < JUG; i++) {
       const min = Math.min(90, Math.floor((i + r()) / JUG * 90) + 1);
-      const pA = 1 / (1 + Math.exp(-(A.medio * k(0) - B.medio * k(1)) / 9));
+      const pA = 1 / (1 + Math.exp(-(A.medio * k(0) - B.medio * k(1)) / DIV));
       const at = r() < pA ? 0 : 1, df = 1 - at, X = T[at], Y = T[df];
       pos[at]++;
       // ¿El que defiende corta la jugada con falta?
@@ -209,5 +217,5 @@
     return xi;
   }
 
-  G.CULTO = { QUIM_MAX, PARTE_MAX, PARTES, PAIS_NOM, bandera, quimicaDetalle, PRESUPUESTO, FORMACIONES, ESTILOS, cargar, fuerza, simular, autoArmar, hash, quimica, precio };
+  G.CULTO = { MOTOR, QUIM_MAX, PARTE_MAX, PARTES, PAIS_NOM, bandera, quimicaDetalle, PRESUPUESTO, FORMACIONES, ESTILOS, cargar, fuerza, simular, autoArmar, hash, quimica, precio };
 })(typeof window !== "undefined" ? window : globalThis);

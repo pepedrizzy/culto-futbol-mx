@@ -21,7 +21,7 @@
   }
 
   const DEBIL = { ataque: 55, medio: 55, defensa: 55, porteria: 55, quimica: 0, roles: [], media: 55, costo: 0 };
-  function fuerzaDe(e, mapa) { return C.fuerza(e, mapa) || DEBIL; }
+  function fuerzaDe(e, mapa, motor) { return C.fuerza(e, mapa, motor || C.MOTOR) || { ...DEBIL, motor: motor || C.MOTOR }; }
   function conLocalia(F) { return { ...F, ataque: F.ataque + LOCAL, medio: F.medio + LOCAL, defensa: F.defensa + LOCAL }; }
 
   function jugar(L, V, seed) {
@@ -83,7 +83,7 @@
     const key = t.id + ":" + t.creado;
     if (cache.has(key)) return cache.get(key);
     const eq = t.equipos.map((e, i) => ({ ...e, i }));
-    const F = eq.map(e => fuerzaDe(e, mapa));
+    const F = eq.map(e => fuerzaDe(e, mapa, t.motor || 2));
     const cal = calendario(eq.length);
     const jornadas = cal.map((J, j) => J.map(([l, v]) => ({ l, v, r: jugar(F[l], F[v], C.hash(t.id + "|J" + (j + 1) + "|" + eq[l].id + "|" + eq[v].id)) })));
     const final = tablaDe(eq, jornadas, JORNADAS);
