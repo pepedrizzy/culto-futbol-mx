@@ -926,6 +926,7 @@ function colocarConsentido() {
 }
 async function asegurarConsentido() {
   if (!me.alias) return;
+  if (sb && !uid) return; // el consentido lo sortea el servidor al entrar con tu cuenta
   if (db && uid) {
     if (!me.consentido || !enServidor) return;
     const visto = "culto-cons-visto-" + uid;
