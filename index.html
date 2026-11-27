@@ -353,7 +353,7 @@ tr.clas td:first-child{box-shadow:inset 4px 0 var(--pasto)}
         <p><b>Carácter y tarjetas:</b> cada jugador tiene carácter. Los 🔥 calientes juegan con más garra (suben un poco la fuerza del equipo), pero se ganan más tarjetas; los 🧊 de temple casi nunca se hacen expulsar. En los partidos hay faltas, amarillas, rojas y penales: con una roja tu equipo juega con uno menos y baja su rendimiento el resto del partido. Los penales los cobra tu mejor tirador contra el portero rival.</p>
         <p><b>Fuera de posición:</b> un jugador en una línea que no es la suya rinde 12 puntos menos; un portero de campo, 40 menos.</p>
         <p><b>Dorsales:</b> con el 11 completo, toca «Editar dorsales» y ponle a cada jugador el número que quieras. Aparece en la cancha y en el relato de los partidos.</p>
-        <p><b>Torneo:</b> inscribe tu 11 y cuando se juntan 18 clubes se juega en vivo un torneo corto completo (dura unos 2 minutos: las jornadas pasan rápido y cada partido de liguilla tarda 10 segundos para que lo veas): 17 jornadas todos contra todos y los 8 mejores a la liguilla de ida y vuelta. Puedes jugar un torneo por día. Si el global queda empatado en cuartos o semis avanza el mejor ubicado; la final se define en penales. Tu 11 queda bloqueado mientras esperas a que se llene el torneo.</p>
+        <p><b>Torneo:</b> inscribe tu 11 y cuando se juntan 18 clubes se juega en vivo un torneo corto completo (dura unos 2 minutos: las jornadas pasan rápido y cada partido de liguilla tarda 10 segundos para que lo veas): 17 jornadas todos contra todos y los 8 mejores a la liguilla de ida y vuelta. En Plata y Descenso puedes jugar un torneo cada 6 horas; en Oro y Élite, uno por día. Si el global queda empatado en cuartos o semis avanza el mejor ubicado; la final se define en penales. Tu 11 queda bloqueado mientras esperas a que se llene el torneo.</p>
         <p><b>Divisiones:</b> hay cuatro, Descenso, Plata, Oro y Élite. Todos empiezan en Plata. En cada torneo el campeón sube una división y el último de la tabla baja una. Los equipos de la casa son más fuertes entre más alta la división.</p>
         <p><b>Campeones:</b> cada campeón entra al Salón de Campeones. Solo los campeones de Élite juegan la Copa de Campeones, que se arma cada 8 campeones de Élite.</p>
         <p><b>Formación:</b> más defensas fortalecen la defensa, más medios dominan la posesión y más delanteros generan ocasiones.</p>
@@ -606,11 +606,24 @@ const miId = () => uid || "yo";
 const torneoActivoDe = id => torneos.find(t => activo(t) && t.equipos.some(e => e.id === id));
 const mismoDia = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
 const jugoHoy = id => torneos.some(t => mismoDia(t.creado, Date.now()) && t.equipos.some(e => e.id === id));
+// Plata y Descenso: un torneo cada 6 horas. Oro y Élite: uno por día.
+const ESPERA_H = 6;
+function esperaHasta(id) {
+  const div = divisionDe(id), ahora = Date.now();
+  if (div === "plata" || div === "descenso") {
+    const ult = torneos.filter(t => t.equipos.some(e => e.id === id)).reduce((m, t) => Math.max(m, t.creado), 0);
+    const listo = ult + ESPERA_H * 3600e3;
+    return ult && listo > ahora ? listo : 0;
+  }
+  if (!jugoHoy(id)) return 0;
+  const m = new Date(); m.setHours(24, 0, 0, 0); return m.getTime();
+}
+const horaTxt = ms => { const d = new Date(ms); const hora = d.toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit" }); return mismoDia(ms, Date.now()) ? `hoy a las ${hora}` : `mañana a las ${hora}`; };
 function enEspera(c) {
   return !!(c.inscripcion && gasto(c.xi) <= C.PRESUPUESTO && !torneos.some(t => t.creado >= c.inscripcion.at && t.equipos.some(e => e.id === c.id)));
 }
 function clubesTodos() { const lista = db ? otros.filter(o => o.id !== uid) : []; return [...lista, { ...me, id: miId() }]; }
-function listaEspera(div) { return clubesTodos().filter(c => enEspera(c) && completo(c) && !torneoActivoDe(c.id) && !jugoHoy(c.id) && (!div || divisionDe(c.id) === div)).sort((a, b) => a.inscripcion.at - b.inscripcion.at || (a.id < b.id ? -1 : 1)); }
+function listaEspera(div) { return clubesTodos().filter(c => enEspera(c) && completo(c) && !torneoActivoDe(c.id) && !esperaHasta(c.id) && (!div || divisionDe(c.id) === div)).sort((a, b) => a.inscripcion.at - b.inscripcion.at || (a.id < b.id ? -1 : 1)); }
 function bloqueo() {
   const t = torneoActivoDe(miId());
   if (t) return { t, txt: `Tu 11 está bloqueado: juegas el Torneo ${t.num}. Se libera cuando termine la final (${cuando(T.fin(t))}).` };
@@ -911,7 +924,7 @@ async function revisarArranque() {
 async function inscribir() {
   if (db && !uid) { toast("Inicia sesión para inscribirte."); location.hash = "perfil"; return; }
   if (bloqueo()) return;
-  if (jugoHoy(miId())) { toast("Ya jugaste un torneo hoy. Vuelve mañana."); return; }
+  { const w = esperaHasta(miId()); if (w) { toast(`Ya jugaste tu torneo. Puedes volver a inscribirte ${horaTxt(w)}.`); return; } }
   if (!me.alias) { toast("Primero regístrate en Perfil."); location.hash = "perfil"; return; }
   if (!completo(me) || gasto(me.xi) > C.PRESUPUESTO) { toast("Completa tu 11 dentro del presupuesto."); location.hash = "mi-once"; return; }
   if (me.consentido && !me.xi.includes(me.consentido)) { colocarConsentido(); sucio = true; pintarOnce(); toast("Tu consentido va siempre en tu 11. Revisa y guarda."); location.hash = "mi-once"; return; }
@@ -1028,7 +1041,7 @@ function pintarLobby() {
   const mio = espera.some(c => c.id === yo), lk = bloqueo();
   let btn;
   if (lk && lk.t) btn = `<button class="btn" disabled>Ya juegas el Torneo ${lk.t.num}</button>`;
-  else if (!mio && jugoHoy(yo)) btn = `<button class="btn" disabled>Ya jugaste hoy · vuelve mañana</button>`;
+  else if (!mio && esperaHasta(yo)) btn = `<button class="btn" disabled>Vuelves a jugar ${horaTxt(esperaHasta(yo))}</button>`;
   else if (mio) btn = `<button class="btn" id="tSalir">Salir de la inscripción</button>`;
   else btn = `<button class="btn pri" id="tInscribir">Inscribir mi 11</button>`;
   const dueno = (esDueno || !db) ? `<div class="owner"><b>${db ? "Solo para administradores" : "Modo local"}:</b> arranca ya el torneo de tu división (${DIV_NOM[miDiv]}) con los inscritos y completa los lugares que falten con equipos de la casa, más fuertes entre más alta la división.<div class="acts" style="margin-top:10px"><select id="tRitmo" aria-label="Ritmo de las jornadas"><option value="-1">En vivo (unos 2 minutos)</option><option value="0">Todo de golpe</option><option value="1">1 jornada por hora</option><option value="6">4 jornadas al día</option><option value="12">2 jornadas al día</option><option value="24">1 jornada al día</option></select><button class="btn" id="tRellenar">Completar con la casa y arrancar</button></div>${torneos.some(t => mismoDia(t.creado, Date.now())) ? `<p class="note" style="margin-top:14px">Modo prueba: borra los torneos de hoy para que todos puedan volver a jugar. Los equipos que jugaron quedan libres para editar e inscribirse de nuevo.</p><div class="acts" style="margin-top:8px"><button class="btn" id="tBorrarHoy">Borrar torneos de hoy</button></div>` : ""}</div>` : "";
@@ -1045,7 +1058,7 @@ function pintarLobby() {
   const sig = DIVS[DIVS.indexOf(miDiv) + 1], ant = DIVS[DIVS.indexOf(miDiv) - 1];
   const regla = `${sig ? `El campeón sube a <b>${DIV_NOM[sig]}</b>` : "El campeón de Élite entra a la Copa de Campeones"}${ant ? ` y el último baja a <b>${DIV_NOM[ant]}</b>` : " y el último se queda en Descenso"}.`;
   $("lobbyPanel").innerHTML = resumen + `<h2>Próximo torneo ${divBadge(miDiv)}</h2>
-    <p style="margin:0">Juegas en la división <b>${DIV_NOM[miDiv]}</b>. ${regla} Cuando se juntan <b>${T.EQUIPOS} clubes</b> de tu división arranca <b>en vivo</b>: las ${T.JORNADAS} jornadas pasan rápido y cada partido de la liguilla tarda 10 segundos, unos 2 minutos en total. Cada club juega <b>un torneo por día</b>.</p>
+    <p style="margin:0">Juegas en la división <b>${DIV_NOM[miDiv]}</b>. ${regla} Cuando se juntan <b>${T.EQUIPOS} clubes</b> de tu división arranca <b>en vivo</b>: las ${T.JORNADAS} jornadas pasan rápido y cada partido de la liguilla tarda 10 segundos, unos 2 minutos en total. ${miDiv === "plata" || miDiv === "descenso" ? "En tu división puedes jugar <b>un torneo cada 6 horas</b>." : "En tu división se juega <b>un torneo por día</b>."}</p>
     <div class="lobby"><i style="width:${n / T.EQUIPOS * 100}%"></i></div>
     <div class="brow"><span><b>${n}</b> de ${T.EQUIPOS} inscritos</span><span>Faltan <b>${Math.max(0, T.EQUIPOS - n)}</b></span></div>
     ${n ? `<div class="chips">${espera.map(c => `<span class="${c.id === yo ? "yo" : ""}">${linkEq(c, "c")}</span>`).join("")}</div>` : ""}
